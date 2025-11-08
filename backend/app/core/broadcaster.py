@@ -1,30 +1,32 @@
-import aioredis
+# app/core/broadcaster.py
 import asyncio
 import json
-from app.core.config import settings
+from typing import Callable, Any
 
-CHANNEL_NAME = "polls_channel"
+# CHANNEL_NAME constant used by router
+CHANNEL_NAME = "quickpoll:events"
 
-class RedisBroadcaster:
-    def __init__(self, url: str):
-        self.url = url
-        self.redis = None
+# Very small publish-subscribe placeholder. Replace with Redis or other.
+_subscribers = {}
 
-    async def connect(self):
-        if not self.redis:
-            self.redis = await aioredis.from_url(self.url, decode_responses=True)
+async def publish(channel: str, message: dict):
+    # In production publish to Redis/Other
+    # Here it's a no-op or in-memory dispatch.
+    data = json.dumps(message, default=str)
+    # attempt to call coroutine subscribers
+    for cb in list(_subscribers.get(channel, [])):
+        try:
+            if asyncio.iscoroutinefunction(cb):
+                await cb(data)
+            else:
+                cb(data)
+        except Exception:
+            pass
 
-    async def publish(self, channel: str, message: dict):
-        if not self.redis:
-            await self.connect()
-        await self.redis.publish(channel, json.dumps(message))
+def subscribe(channel: str, callback: Callable[[Any], Any]):
+    _subscribers.setdefault(channel, []).append(callback)
 
-    async def subscribe(self, channel: str):
-        if not self.redis:
-            await self.connect()
-        pubsub = self.redis.pubsub()
-        await pubsub.subscribe(channel)
-        return pubsub
-
-# Singleton instance
-broadcaster = RedisBroadcaster(settings.REDIS_URL)
+def unsubscribe(channel: str, callback: Callable[[Any], Any]):
+    lst = _subscribers.get(channel, [])
+    if callback in lst:
+        lst.remove(callback)
