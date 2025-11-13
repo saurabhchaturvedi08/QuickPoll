@@ -1,0 +1,18 @@
+db.createCollection("votes", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["poll_id", "user_id", "option_id", "created_at"],
+      properties: {
+        poll_id: { bsonType: "objectId" },
+        user_id: { bsonType: "objectId" },
+        option_id: { bsonType: "string" },
+        created_at: { bsonType: "date" }
+      }
+    }
+  }
+});
+
+db.votes.createIndex({ poll_id: 1, user_id: 1 }, { unique: true, name: "uix_votes_poll_user" });
+db.votes.createIndex({ poll_id: 1 }, { name: "idx_votes_poll" });
+db.votes.createIndex({ user_id: 1 }, { name: "idx_votes_user" });

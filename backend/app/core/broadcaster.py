@@ -1,12 +1,9 @@
-# app/core/broadcaster.py
 import asyncio
 import json
 from typing import Callable, Any
 
-# CHANNEL_NAME constant used by router
 CHANNEL_NAME = "quickpoll:events"
 
-# Very small publish-subscribe placeholder. Replace with Redis or other.
 _subscribers = {}
 
 async def publish(channel: str, message: dict):

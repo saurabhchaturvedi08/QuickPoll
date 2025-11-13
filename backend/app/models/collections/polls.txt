@@ -1,0 +1,43 @@
+db.createCollection("polls", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["owner_id", "question", "options", "created_at"],
+      properties: {
+        owner_id: { bsonType: "objectId" },
+        question: { bsonType: "string", minLength: 1, maxLength: 1000 },
+        options: {
+          bsonType: "array",
+          minItems: 2,
+          items: {
+            bsonType: "object",
+            required: ["id", "text", "count"],
+            properties: {
+              id: { bsonType: "string" },
+              text: { bsonType: "string" },
+              count: { bsonType: "int" }
+            }
+          }
+        },
+        likes: { bsonType: "int" },
+        active: { bsonType: "bool" },
+        expires_at: { bsonType: ["date", "null"] },
+        created_at: { bsonType: "date" },
+        updated_at: { bsonType: ["date", "null"] },
+        meta: { bsonType: "object" }
+      }
+    }
+  },
+  validationLevel: "moderate"
+});
+
+// Indexes
+db.polls.createIndex({ owner_id: 1 }, { name: "idx_polls_owner" });
+db.polls.createIndex({ created_at: -1 }, { name: "idx_polls_created_at" });
+db.polls.createIndex({ expires_at: 1 }, { name: "idx_polls_expires_at" });
+db.polls.createIndex({ question: "text" }, { name: "idx_polls_question_text" });
+db.polls.createIndex({ "options.id": 1 }, { name: "idx_polls_options_id" });
+
+If you want automatic deletion at expiration, use a TTL index on a field that indicates deletion time. Example:
+// if you set "delete_at" to a Date when poll should be removed
+db.polls.createIndex({ delete_at: 1 }, { expireAfterSeconds: 0, name: "idx_polls_ttl" });

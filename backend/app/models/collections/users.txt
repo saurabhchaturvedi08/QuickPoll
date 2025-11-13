@@ -1,0 +1,25 @@
+use quickpoll;
+
+// Create collection with JSON schema validator
+db.createCollection("users", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["email", "created_at"],
+      properties: {
+        google_id: { bsonType: ["string"], description: "Google sub id (optional)" },
+        email: { bsonType: "string", description: "User email" },
+        name: { bsonType: ["string", "null"] },
+        picture: { bsonType: ["string", "null"] },
+        created_at: { bsonType: "date" },
+        last_seen: { bsonType: ["date", "null"] }
+      }
+    }
+  },
+  validationLevel: "moderate"
+});
+
+// Indexes
+db.users.createIndex({ email: 1 }, { unique: true, name: "idx_users_email" });
+db.users.createIndex({ google_id: 1 }, { unique: true, sparse: true, name: "idx_users_google_id" });
+db.users.createIndex({ last_seen: -1 }, { name: "idx_users_last_seen" });
